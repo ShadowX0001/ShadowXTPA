@@ -1,9 +1,12 @@
 package com.shadowx.tpa;
 
 import com.shadowx.tpa.commands.TPACommand;
+import com.shadowx.tpa.commands.AcceptCommand;
+import com.shadowx.tpa.commands.DenyCommand;
 import com.shadowx.tpa.managers.RequestManager;
 
 import org.bukkit.command.PluginCommand;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ShadowXTPA extends JavaPlugin {
@@ -22,11 +25,17 @@ public final class ShadowXTPA extends JavaPlugin {
         // Initialize Request Manager
         requestManager = new RequestManager(this);
 
-        // Register TPA command
+        // Register TPA commands
         registerCommand("tpa", new TPACommand(this, requestManager));
-
-        // Register TPAHere command
         registerCommand("tpahere", new TPACommand(this, requestManager));
+
+        // Register Accept command
+        registerCommand("tpaccept",
+                new AcceptCommand(this, requestManager));
+
+        // Register Deny command
+        registerCommand("tpdeny",
+                new DenyCommand(requestManager));
 
         getLogger().info("================================");
         getLogger().info("       ShadowXTPA Enabled");
@@ -35,7 +44,7 @@ public final class ShadowXTPA extends JavaPlugin {
         getLogger().info("================================");
     }
 
-    private void registerCommand(String name, TPACommand executor) {
+    private void registerCommand(String name, CommandExecutor executor) {
 
         PluginCommand command = getCommand(name);
 
