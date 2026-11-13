@@ -1,106 +1,76 @@
 package com.shadowx.tpa.commands;
 
 import com.shadowx.tpa.managers.RequestManager;
-import com.shadowx.tpa.managers.RequestManager.TPARequest;
+import com.shadowx.tpa.managers.SoundManager;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
+import org.bukkit.command.*;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class CancelCommand implements CommandExecutor {
 
-    private final RequestManager requestManager;
+    private final JavaPlugin plugin;
+    private final RequestManager manager;
 
-    public CancelCommand(RequestManager requestManager) {
-        this.requestManager = requestManager;
+    public CancelCommand(JavaPlugin plugin, RequestManager manager) {
+        this.plugin = plugin;
+        this.manager = manager;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command,
                              String label, String[] args) {
 
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can use this command!");
-            return true;
-        }
+        if (!(sender instanceof Player player)) return true;
 
         if (!player.hasPermission("shadowxtpa.tpa")) {
-            player.sendMessage(color("&cYou don't have permission!"));
+            player.sendMessage("§cNo permission!");
             return true;
         }
 
-        Player target = null;
+        if (args.length > 1) {
+            player.sendMessage("§cUsage: /tpacancel [player]");
+            return true;
+        }
 
-        if (args.length == 1) {
-            target = Bukkit.getPlayerExact(args[0]);
+        int cancelled = 0;
 
-            if (target == null) {
-                player.sendMessage(color("&cPlayer not found or offline!"));
-                return true;
+        for (Player target : Bukkit.getOnlinePlayers()) {
+
+            if (args.length == 1 &&
+                    !target.getName().equalsIgnoreCase(args[0])) {
+                continue;
             }
-        } else if (args.length > 1) {
-            player.sendMessage(color("&cUsage: /tpacancel [player]"));
-            return true;
-        }
 
-        TPARequest selectedRequest = null;
-
-        if (target != null) {
-            selectedRequest = requestManager.getRequest(
+            if (manager.removeRequest(
                     player.getUniqueId(),
-                    target.getUniqueId()
-            );
-        } else {
-            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                TPARequest request = requestManager.getRequest(
-                        player.getUniqueId(),
-                        onlinePlayer.getUniqueId()
-                );
+                    target.getUniqueId())) {
 
-                if (request != null) {
-                    selectedRequest = request;
-                    target = onlinePlayer;
-                    break;
-                }
+                cancelled++;
+
+                target.sendMessage("§c" + player.getName()
+                        + " cancelled their request.");
+
+                manager.addHistory(target.getUniqueId(),
+                        player.getName() + " cancelled their request");
+
+                SoundManager.play(plugin, target, "request-cancelled");
             }
         }
 
-        if (selectedRequest == null) {
-            player.sendMessage(color("&cYou have no pending request to cancel!"));
+        if (cancelled == 0) {
+            player.sendMessage("§cNo pending requests found!");
             return true;
         }
 
-        if (!requestManager.removeRequest(
-                player.getUniqueId(),
-                target.getUniqueId())) {
+        player.sendMessage("§aCancelled " + cancelled + " request(s)!");
 
-            player.sendMessage(color("&cCould not cancel your request!"));
-            return true;
-        }
+        manager.addHistory(player.getUniqueId(),
+                "Cancelled " + cancelled + " request(s)");
 
-        player.sendMessage(color("&aYour TPA request to &e"
-                + target.getName() + " &ahas been cancelled!"));
-
-        target.sendMessage(color("&e" + player.getName()
-                + " &chas cancelled their TPA request!"));
-
-        requestManager.addHistory(
-                player.getUniqueId(),
-                "Cancelled request to " + target.getName()
-        );
-
-        requestManager.addHistory(
-                target.getUniqueId(),
-                player.getName() + " cancelled their request"
-        );
+        SoundManager.play(plugin, player, "request-cancelled");
 
         return true;
-    }
-
-    private String color(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
     }
 }
