@@ -13,9 +13,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 public class AcceptCommand implements CommandExecutor {
@@ -46,13 +44,14 @@ public class AcceptCommand implements CommandExecutor {
                 requestManager.getRequests(player.getUniqueId());
 
         if (requests.isEmpty()) {
-            player.sendMessage(color("&cYou don't have any pending TPA requests!"));
+            player.sendMessage(color("&cNo pending TPA requests!"));
             return true;
         }
 
-        TPARequest selectedRequest = null;
+        TPARequest selectedRequest;
 
         if (args.length == 1) {
+
             Player target = Bukkit.getPlayerExact(args[0]);
 
             if (target == null) {
@@ -61,7 +60,9 @@ public class AcceptCommand implements CommandExecutor {
             }
 
             selectedRequest = requestManager.getRequest(
-                    target.getUniqueId(), player.getUniqueId());
+                    target.getUniqueId(),
+                    player.getUniqueId()
+            );
 
             if (selectedRequest == null) {
                 player.sendMessage(color("&cNo request from that player!"));
@@ -71,8 +72,8 @@ public class AcceptCommand implements CommandExecutor {
         } else if (args.length == 0) {
 
             if (requests.size() > 1) {
-                player.sendMessage(color("&eYou have multiple requests!"));
-                player.sendMessage(color("&7Use &f/tpaccept <player>"));
+                player.sendMessage(color("&eMultiple requests found!"));
+                player.sendMessage(color("&7Use /tpaccept <player>"));
                 return true;
             }
 
@@ -84,19 +85,20 @@ public class AcceptCommand implements CommandExecutor {
         }
 
         UUID requesterId = selectedRequest.getSender();
-        RequestType type = selectedRequest.getType();
 
         Player requester = Bukkit.getPlayer(requesterId);
 
         if (requester == null) {
-            requestManager.removeRequest(requesterId, player.getUniqueId());
-            player.sendMessage(color("&cThat player is no longer online!"));
+            requestManager.removeRequest(
+                    requesterId,
+                    player.getUniqueId()
+            );
+
+            player.sendMessage(color("&cThat player is offline!"));
             return true;
         }
 
-        requestManager.removeRequest(requesterId, player.getUniqueId());
-
-        int delay = plugin.getConfig().getInt("settings.teleport-delay", 5);
+        RequestType type = selectedRequest.getType();
 
         Player teleportingPlayer;
         Player destinationPlayer;
@@ -109,22 +111,57 @@ public class AcceptCommand implements CommandExecutor {
             destinationPlayer = requester;
         }
 
-        player.sendMessage(color("&aYou accepted &e" + requester.getName()
-                + "&a's request!"));
+        boolean allowCrossWorld = plugin.getConfig()
+                .getBoolean("settings.allow-cross-world", true);
 
-        requester.sendMessage(color("&aYour TPA request was accepted by &e"
+        if (!allowCrossWorld &&
+                !teleportingPlayer.getWorld().equals(destinationPlayer.getWorld())) {
+
+            player.sendMessage(color("&cCross-world teleport is disabled!"));
+            return true;
+        }
+
+        requestManager.removeRequest(
+                requesterId,
+                player.getUniqueId()
+        );
+
+        player.sendMessage(color("&aYou accepted &e"
+                + requester.getName() + "&a's request!"));
+
+        requester.sendMessage(color("&aYour request was accepted by &e"
                 + player.getName() + "&a!"));
+
+        requestManager.addHistory(
+                player.getUniqueId(),
+                "Accepted " + type + " request from " + requester.getName()
+        );
+
+        requestManager.addHistory(
+                requester.getUniqueId(),
+                "Request accepted by " + player.getName()
+        );
+
+        int delay = plugin.getConfig()
+                .getInt("settings.teleport-delay", 5);
+
+        if (teleportingPlayer.hasPermission("shadowxtpa.bypass.delay")) {
+            delay = 0;
+        }
 
         if (delay <= 0) {
             teleportPlayer(teleportingPlayer, destinationPlayer);
             return true;
         }
 
-        teleportingPlayer.sendMessage(color("&aTeleporting in &e"
-                + delay + " seconds&a. Please wait!"));
+        teleportingPlayer.sendMessage(color(
+                "&aTeleporting in &e" + delay + " seconds&a!"
+        ));
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (!teleportingPlayer.isOnline() || !destinationPlayer.isOnline()) {
+
+            if (!teleportingPlayer.isOnline()
+                    || !destinationPlayer.isOnline()) {
                 return;
             }
 
@@ -145,7 +182,7 @@ public class AcceptCommand implements CommandExecutor {
 
         player.teleport(destination);
 
-        player.sendMessage(color("&aYou have been teleported to &e"
+        player.sendMessage(color("&aTeleported to &e"
                 + target.getName() + "&a!"));
 
         target.sendMessage(color("&e" + player.getName()
@@ -155,4 +192,4 @@ public class AcceptCommand implements CommandExecutor {
     private String color(String message) {
         return ChatColor.translateAlternateColorCodes('&', message);
     }
-          }
+}
