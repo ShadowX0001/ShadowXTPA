@@ -1,0 +1,49 @@
+prefix: "&8[&bShadowXTPA&8] "
+
+messages:
+
+  no-permission: "&cYou don't have permission!"
+  player-not-found: "&cPlayer not found or offline!"
+  player-only: "&cOnly players can use this command!"
+  self-request: "&cYou cannot send a request to yourself!"
+
+  request-sent: "&aTPA request successfully sent to &e{player}&a!"
+  request-received: "&e{player} &awants to teleport to you!"
+  request-expired: "&cYour TPA request has expired!"
+  request-cancelled: "&cYour TPA request was cancelled!"
+  request-denied: "&cYour TPA request was denied!"
+  request-accepted: "&aYour TPA request was accepted!"
+
+  request-already-sent: "&cYou already have a pending request!"
+  request-already-received: "&cYou already have a request from this player!"
+  request-limit: "&cYou have reached the maximum pending requests!"
+  no-pending-request: "&cYou don't have any pending requests!"
+
+  accept-button: "&a[✔ ACCEPT]"
+  deny-button: "&c[✖ DENY]"
+
+  accept-hover: "&aClick to accept this request"
+  deny-hover: "&cClick to deny this request"
+
+  teleport-starting: "&aTeleporting in &e{time} &aseconds. Don't move!"
+  teleport-cancelled-move: "&cTeleport cancelled because you moved!"
+  teleport-cancelled-damage: "&cTeleport cancelled because you took damage!"
+  teleport-cancelled-death: "&cTeleport cancelled because you died!"
+  teleport-cancelled-world: "&cTeleport cancelled because you changed worlds!"
+  teleport-success: "&aTeleport completed successfully!"
+
+  cooldown: "&cPlease wait &e{time} &cseconds before sending another request!"
+
+  ignore-added: "&aYou are now ignoring &e{player}&a."
+  ignore-removed: "&aYou are no longer ignoring &e{player}&a."
+  already-ignored: "&cThis player is already ignored!"
+  not-ignored: "&cThis player is not in your ignore list!"
+
+  toggle-enabled: "&aYou are now accepting TPA requests!"
+  toggle-disabled: "&cYou are no longer accepting TPA requests!"
+
+  cross-world-disabled: "&cCross-world teleportation is disabled!"
+
+  reload-success: "&aShadowXTPA configuration reloaded!"
+
+  invalid-usage: "&cUsage: {usage}"
