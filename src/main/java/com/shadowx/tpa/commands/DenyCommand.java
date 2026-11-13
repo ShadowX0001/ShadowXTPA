@@ -1,117 +1,78 @@
 package com.shadowx.tpa.commands;
 
 import com.shadowx.tpa.managers.RequestManager;
-import com.shadowx.tpa.managers.RequestManager.TPARequest;
+import com.shadowx.tpa.managers.SoundManager;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
+import org.bukkit.command.*;
 import org.bukkit.entity.Player;
-
-import java.util.Collection;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class DenyCommand implements CommandExecutor {
 
-    private final RequestManager requestManager;
+    private final JavaPlugin plugin;
+    private final RequestManager manager;
 
-    public DenyCommand(RequestManager requestManager) {
-        this.requestManager = requestManager;
+    public DenyCommand(JavaPlugin plugin, RequestManager manager) {
+        this.plugin = plugin;
+        this.manager = manager;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command,
                              String label, String[] args) {
 
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can use this command!");
-            return true;
-        }
+        if (!(sender instanceof Player player)) return true;
 
         if (!player.hasPermission("shadowxtpa.deny")) {
-            player.sendMessage(color("&cYou don't have permission!"));
+            player.sendMessage("§cNo permission!");
             return true;
         }
 
-        Collection<TPARequest> requests =
-                requestManager.getRequests(player.getUniqueId());
-
-        if (requests.isEmpty()) {
-            player.sendMessage(color("&cNo pending TPA requests!"));
+        if (args.length > 1) {
+            player.sendMessage("§cUsage: /tpdeny [player]");
             return true;
         }
 
-        TPARequest selectedRequest;
+        Player target = null;
 
         if (args.length == 1) {
+            target = Bukkit.getPlayerExact(args[0]);
+        } else if (manager.getPendingCount(player.getUniqueId()) == 1) {
+            var request = manager.getRequests(player.getUniqueId())
+                    .iterator().next();
 
-            Player target = Bukkit.getPlayerExact(args[0]);
+            target = Bukkit.getPlayer(request.getSender());
+        }
 
-            if (target == null) {
-                player.sendMessage(color("&cPlayer not found or offline!"));
-                return true;
-            }
-
-            selectedRequest = requestManager.getRequest(
-                    target.getUniqueId(),
-                    player.getUniqueId()
-            );
-
-            if (selectedRequest == null) {
-                player.sendMessage(color("&cNo request from that player!"));
-                return true;
-            }
-
-        } else if (args.length == 0) {
-
-            if (requests.size() > 1) {
-                player.sendMessage(color("&eMultiple requests found!"));
-                player.sendMessage(color("&7Use /tpdeny <player>"));
-                return true;
-            }
-
-            selectedRequest = requests.iterator().next();
-
-        } else {
-            player.sendMessage(color("&cUsage: /tpdeny [player]"));
+        if (target == null) {
+            player.sendMessage("§cRequest not found!");
             return true;
         }
 
-        Player requester = Bukkit.getPlayer(
-                selectedRequest.getSender()
-        );
-
-        if (!requestManager.removeRequest(
-                selectedRequest.getSender(),
+        if (!manager.removeRequest(
+                target.getUniqueId(),
                 player.getUniqueId())) {
-            player.sendMessage(color("&cRequest could not be removed!"));
+
+            player.sendMessage("§cNo request from that player!");
             return true;
         }
 
-        player.sendMessage(color("&cYou denied the TPA request!"));
+        player.sendMessage("§cRequest denied!");
 
-        requestManager.addHistory(
-                player.getUniqueId(),
-                "Denied request from "
-                        + (requester != null ? requester.getName() : "Unknown")
-        );
+        target.sendMessage("§cYour request was denied by "
+                + player.getName());
 
-        if (requester != null) {
+        manager.addHistory(player.getUniqueId(),
+                "Denied request from " + target.getName());
 
-            requester.sendMessage(color("&cYour TPA request was denied by &e"
-                    + player.getName() + "&c!"));
+        manager.addHistory(target.getUniqueId(),
+                "Request denied by " + player.getName());
 
-            requestManager.addHistory(
-                    requester.getUniqueId(),
-                    "Request denied by " + player.getName()
-            );
-        }
+        SoundManager.play(plugin, player, "request-denied");
+        SoundManager.play(plugin, target, "request-denied");
 
         return true;
-    }
-
-    private String color(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
     }
 }
