@@ -1,0 +1,81 @@
+name: ShadowXTPA
+version: 1.0.0
+main: com.shadowx.tpa.ShadowXTPA
+api-version: '1.21'
+author: ShadowX
+description: Advanced Clickable TPA System
+
+commands:
+
+  tpa:
+    description: Send teleport request
+    usage: /tpa <player>
+    aliases:
+      - call
+
+  tpahere:
+    description: Request player to teleport to you
+    usage: /tpahere <player>
+
+  tpaccept:
+    description: Accept teleport request
+    aliases:
+      - tpyes
+
+  tpdeny:
+    description: Deny teleport request
+    aliases:
+      - tpno
+
+  tpacancel:
+    description: Cancel sent request
+
+  tpignore:
+    description: Ignore a player
+
+  tpignorelist:
+    description: View ignored players
+
+  tpatoggle:
+    description: Toggle incoming requests
+
+  tpahistory:
+    description: View request history
+
+  tpalist:
+    description: View pending requests
+
+  tpareload:
+    description: Reload plugin configuration
+
+permissions:
+
+  shadowxtpa.use:
+    default: true
+
+  shadowxtpa.tpa:
+    default: true
+
+  shadowxtpa.tpahere:
+    default: true
+
+  shadowxtpa.accept:
+    default: true
+
+  shadowxtpa.deny:
+    default: true
+
+  shadowxtpa.ignore:
+    default: true
+
+  shadowxtpa.toggle:
+    default: true
+
+  shadowxtpa.bypass.cooldown:
+    default: op
+
+  shadowxtpa.bypass.delay:
+    default: op
+
+  shadowxtpa.admin:
+    default: op
