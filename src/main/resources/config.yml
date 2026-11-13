@@ -1,43 +1,57 @@
 # =====================================
-#          ShadowXTPA CONFIG
+#           SHADOWXTPA CONFIG
 # =====================================
 
 settings:
 
-  # Request automatically expire hone ka time
   request-timeout: 60
 
-  # Teleport countdown (seconds)
   teleport-delay: 5
 
-  # Request bhejne ka cooldown
   cooldown: 30
 
-  # Maximum pending requests
   max-pending-requests: 5
 
-  # Teleport cancellation settings
+  history-limit: 20
+
   cancel-on-move: true
+
   cancel-on-damage: true
+
   cancel-on-death: true
+
   cancel-on-world-change: true
 
-  # Cross-world teleport
   allow-cross-world: true
 
-  # Duplicate request protection
   prevent-duplicate-requests: true
 
-  # TPA requests default ON
   request-toggle-default: true
 
-  # Ignore system
   ignore-system: true
 
-  # Debug mode
   debug: false
 
-  # Command aliases
-  aliases:
-    tp: true
-    call: true
+sounds:
+
+  enabled: true
+
+  volume: 1.0
+
+  pitch: 1.0
+
+  request-sent: UI_BUTTON_CLICK
+
+  request-received: BLOCK_NOTE_BLOCK_PLING
+
+  request-accepted: ENTITY_PLAYER_LEVELUP
+
+  request-denied: BLOCK_NOTE_BLOCK_BASS
+
+  request-cancelled: BLOCK_NOTE_BLOCK_BASS
+
+  teleport-countdown: BLOCK_NOTE_BLOCK_PLING
+
+  teleport-success: ENTITY_ENDERMAN_TELEPORT
+
+  teleport-cancel: BLOCK_NOTE_BLOCK_BASS
