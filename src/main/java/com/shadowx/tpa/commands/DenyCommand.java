@@ -38,7 +38,7 @@ public class DenyCommand implements CommandExecutor {
                 requestManager.getRequests(player.getUniqueId());
 
         if (requests.isEmpty()) {
-            player.sendMessage(color("&cYou don't have any pending TPA requests!"));
+            player.sendMessage(color("&cNo pending TPA requests!"));
             return true;
         }
 
@@ -54,7 +54,9 @@ public class DenyCommand implements CommandExecutor {
             }
 
             selectedRequest = requestManager.getRequest(
-                    target.getUniqueId(), player.getUniqueId());
+                    target.getUniqueId(),
+                    player.getUniqueId()
+            );
 
             if (selectedRequest == null) {
                 player.sendMessage(color("&cNo request from that player!"));
@@ -64,8 +66,8 @@ public class DenyCommand implements CommandExecutor {
         } else if (args.length == 0) {
 
             if (requests.size() > 1) {
-                player.sendMessage(color("&eYou have multiple requests!"));
-                player.sendMessage(color("&7Use &f/tpdeny <player>"));
+                player.sendMessage(color("&eMultiple requests found!"));
+                player.sendMessage(color("&7Use /tpdeny <player>"));
                 return true;
             }
 
@@ -76,18 +78,34 @@ public class DenyCommand implements CommandExecutor {
             return true;
         }
 
-        Player requester = Bukkit.getPlayer(selectedRequest.getSender());
-
-        requestManager.removeRequest(
-                selectedRequest.getSender(),
-                player.getUniqueId()
+        Player requester = Bukkit.getPlayer(
+                selectedRequest.getSender()
         );
+
+        if (!requestManager.removeRequest(
+                selectedRequest.getSender(),
+                player.getUniqueId())) {
+            player.sendMessage(color("&cRequest could not be removed!"));
+            return true;
+        }
 
         player.sendMessage(color("&cYou denied the TPA request!"));
 
+        requestManager.addHistory(
+                player.getUniqueId(),
+                "Denied request from "
+                        + (requester != null ? requester.getName() : "Unknown")
+        );
+
         if (requester != null) {
+
             requester.sendMessage(color("&cYour TPA request was denied by &e"
                     + player.getName() + "&c!"));
+
+            requestManager.addHistory(
+                    requester.getUniqueId(),
+                    "Request denied by " + player.getName()
+            );
         }
 
         return true;
