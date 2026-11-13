@@ -3,15 +3,14 @@ version: 1.0.0
 main: com.shadowx.tpa.ShadowXTPA
 api-version: '1.21'
 author: ShadowX
-description: Advanced Clickable TPA System
+description: Advanced TPA System
 
 commands:
 
   tpa:
     description: Send teleport request
     usage: /tpa <player>
-    aliases:
-      - call
+    aliases: [call]
 
   tpahere:
     description: Request player to teleport to you
@@ -19,16 +18,15 @@ commands:
 
   tpaccept:
     description: Accept teleport request
-    aliases:
-      - tpyes
+    aliases: [tpyes]
 
   tpdeny:
     description: Deny teleport request
-    aliases:
-      - tpno
+    aliases: [tpno]
 
   tpacancel:
-    description: Cancel sent request
+    description: Cancel teleport request
+    aliases: [tpcancel]
 
   tpignore:
     description: Ignore a player
