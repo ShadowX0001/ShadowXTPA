@@ -4,7 +4,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class ReloadCommand implements CommandExecutor {
@@ -16,8 +15,12 @@ public class ReloadCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command,
-                             String label, String[] args) {
+    public boolean onCommand(
+            CommandSender sender,
+            Command command,
+            String label,
+            String[] args
+    ) {
 
         if (!sender.hasPermission("shadowxtpa.admin")) {
             sender.sendMessage(color("&cYou don't have permission!"));
@@ -29,12 +32,29 @@ public class ReloadCommand implements CommandExecutor {
             return true;
         }
 
-        plugin.reloadConfig();
+        try {
 
-        sender.sendMessage(color("&aShadowXTPA configuration reloaded successfully!"));
+            plugin.reloadConfig();
 
-        plugin.getLogger().info("Configuration successfully reloaded by "
-                + sender.getName());
+            sender.sendMessage(color(
+                    "&aShadowXTPA configuration reloaded successfully!"
+            ));
+
+            plugin.getLogger().info(
+                    "Configuration reloaded by " + sender.getName()
+            );
+
+        } catch (Exception exception) {
+
+            sender.sendMessage(color(
+                    "&cConfiguration reload failed!"
+            ));
+
+            plugin.getLogger().severe(
+                    "Failed to reload configuration: "
+                    + exception.getMessage()
+            );
+        }
 
         return true;
     }
