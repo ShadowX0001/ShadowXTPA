@@ -3,27 +3,31 @@ package com.shadowx.tpa.commands;
 import com.shadowx.tpa.managers.RequestManager;
 import com.shadowx.tpa.managers.RequestManager.TPARequest;
 import com.shadowx.tpa.managers.RequestManager.RequestType;
+import com.shadowx.tpa.managers.TeleportManager;
+import com.shadowx.tpa.managers.SoundManager;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
+import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collection;
-import java.util.UUID;
 
 public class AcceptCommand implements CommandExecutor {
 
     private final JavaPlugin plugin;
-    private final RequestManager requestManager;
+    private final RequestManager requests;
+    private final TeleportManager teleports;
 
-    public AcceptCommand(JavaPlugin plugin, RequestManager requestManager) {
+    public AcceptCommand(
+            JavaPlugin plugin,
+            RequestManager requests,
+            TeleportManager teleports
+    ) {
         this.plugin = plugin;
-        this.requestManager = requestManager;
+        this.requests = requests;
+        this.teleports = teleports;
     }
 
     @Override
@@ -36,160 +40,109 @@ public class AcceptCommand implements CommandExecutor {
         }
 
         if (!player.hasPermission("shadowxtpa.accept")) {
-            player.sendMessage(color("&cYou don't have permission!"));
+            player.sendMessage(c("&cNo permission!"));
             return true;
         }
 
-        Collection<TPARequest> requests =
-                requestManager.getRequests(player.getUniqueId());
+        Collection<TPARequest> list =
+                requests.getRequests(player.getUniqueId());
 
-        if (requests.isEmpty()) {
-            player.sendMessage(color("&cNo pending TPA requests!"));
+        if (list.isEmpty()) {
+            player.sendMessage(c("&cNo pending requests!"));
             return true;
         }
 
-        TPARequest selectedRequest;
+        TPARequest selected = null;
 
         if (args.length == 1) {
 
             Player target = Bukkit.getPlayerExact(args[0]);
 
             if (target == null) {
-                player.sendMessage(color("&cPlayer not found or offline!"));
+                player.sendMessage(c("&cPlayer not found!"));
                 return true;
             }
 
-            selectedRequest = requestManager.getRequest(
+            selected = requests.getRequest(
                     target.getUniqueId(),
                     player.getUniqueId()
             );
 
-            if (selectedRequest == null) {
-                player.sendMessage(color("&cNo request from that player!"));
-                return true;
-            }
+        } else if (args.length == 0 && list.size() == 1) {
 
-        } else if (args.length == 0) {
-
-            if (requests.size() > 1) {
-                player.sendMessage(color("&eMultiple requests found!"));
-                player.sendMessage(color("&7Use /tpaccept <player>"));
-                return true;
-            }
-
-            selectedRequest = requests.iterator().next();
+            selected = list.iterator().next();
 
         } else {
-            player.sendMessage(color("&cUsage: /tpaccept [player]"));
+
+            player.sendMessage(c("&eMultiple requests! Use /tpaccept <player>"));
             return true;
         }
 
-        UUID requesterId = selectedRequest.getSender();
+        if (selected == null) {
+            player.sendMessage(c("&cRequest not found!"));
+            return true;
+        }
 
-        Player requester = Bukkit.getPlayer(requesterId);
+        Player requester = Bukkit.getPlayer(selected.getSender());
 
         if (requester == null) {
-            requestManager.removeRequest(
-                    requesterId,
+            requests.removeRequest(
+                    selected.getSender(),
                     player.getUniqueId()
             );
 
-            player.sendMessage(color("&cThat player is offline!"));
+            player.sendMessage(c("&cRequester is offline!"));
             return true;
         }
 
-        RequestType type = selectedRequest.getType();
+        Player teleporting;
+        Player destination;
 
-        Player teleportingPlayer;
-        Player destinationPlayer;
-
-        if (type == RequestType.TPA) {
-            teleportingPlayer = requester;
-            destinationPlayer = player;
+        if (selected.getType() == RequestType.TPA) {
+            teleporting = requester;
+            destination = player;
         } else {
-            teleportingPlayer = player;
-            destinationPlayer = requester;
+            teleporting = player;
+            destination = requester;
         }
 
-        boolean allowCrossWorld = plugin.getConfig()
-                .getBoolean("settings.allow-cross-world", true);
+        if (!plugin.getConfig().getBoolean(
+                "settings.allow-cross-world", true)
+                && !teleporting.getWorld().equals(destination.getWorld())) {
 
-        if (!allowCrossWorld &&
-                !teleportingPlayer.getWorld().equals(destinationPlayer.getWorld())) {
-
-            player.sendMessage(color("&cCross-world teleport is disabled!"));
+            player.sendMessage(c("&cCross-world teleport disabled!"));
             return true;
         }
 
-        requestManager.removeRequest(
-                requesterId,
+        requests.removeRequest(
+                requester.getUniqueId(),
                 player.getUniqueId()
         );
 
-        player.sendMessage(color("&aYou accepted &e"
-                + requester.getName() + "&a's request!"));
+        player.sendMessage(c("&aAccepted request from &e"
+                + requester.getName()));
 
-        requester.sendMessage(color("&aYour request was accepted by &e"
-                + player.getName() + "&a!"));
+        requester.sendMessage(c("&aYour request was accepted!"));
 
-        requestManager.addHistory(
+        requests.addHistory(
                 player.getUniqueId(),
-                "Accepted " + type + " request from " + requester.getName()
+                "Accepted request from " + requester.getName()
         );
 
-        requestManager.addHistory(
+        requests.addHistory(
                 requester.getUniqueId(),
                 "Request accepted by " + player.getName()
         );
 
-        int delay = plugin.getConfig()
-                .getInt("settings.teleport-delay", 5);
+        SoundManager.play(plugin, player, "request-accepted");
+        SoundManager.play(plugin, requester, "request-accepted");
 
-        if (teleportingPlayer.hasPermission("shadowxtpa.bypass.delay")) {
-            delay = 0;
-        }
-
-        if (delay <= 0) {
-            teleportPlayer(teleportingPlayer, destinationPlayer);
-            return true;
-        }
-
-        teleportingPlayer.sendMessage(color(
-                "&aTeleporting in &e" + delay + " seconds&a!"
-        ));
-
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-
-            if (!teleportingPlayer.isOnline()
-                    || !destinationPlayer.isOnline()) {
-                return;
-            }
-
-            teleportPlayer(teleportingPlayer, destinationPlayer);
-
-        }, delay * 20L);
+        teleports.teleport(teleporting, destination);
 
         return true;
     }
 
-    private void teleportPlayer(Player player, Player target) {
-
-        if (!player.isOnline() || !target.isOnline()) {
-            return;
-        }
-
-        Location destination = target.getLocation();
-
-        player.teleport(destination);
-
-        player.sendMessage(color("&aTeleported to &e"
-                + target.getName() + "&a!"));
-
-        target.sendMessage(color("&e" + player.getName()
-                + " &ahas teleported to you!"));
-    }
-
-    private String color(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
+    private String c(String text) {
+        return ChatColor.translateAlternateColorCodes('&', text);
     }
 }
