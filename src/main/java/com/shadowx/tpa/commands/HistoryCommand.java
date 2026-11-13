@@ -7,8 +7,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.Collections;
 import java.util.List;
 
 public class HistoryCommand implements CommandExecutor {
@@ -20,8 +19,12 @@ public class HistoryCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command,
-                             String label, String[] args) {
+    public boolean onCommand(
+            CommandSender sender,
+            Command command,
+            String label,
+            String[] args
+    ) {
 
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Only players can use this command!");
@@ -38,18 +41,30 @@ public class HistoryCommand implements CommandExecutor {
         List<String> history =
                 plugin.getConfig().getStringList(path);
 
-        player.sendMessage(color("&8&m--------&r &6TPA History &8&m--------"));
+        player.sendMessage(color("&8&m----------&r &6TPA HISTORY &8&m----------"));
 
         if (history.isEmpty()) {
-            player.sendMessage(color("&7No TPA history found!"));
+            player.sendMessage(color("&7Your TPA history is empty!"));
+            player.sendMessage(color("&8&m------------------------------------"));
             return true;
         }
 
-        for (String entry : history) {
-            player.sendMessage(color("&e» &f" + entry));
+        Collections.reverse(history);
+
+        int maximum = plugin.getConfig()
+                .getInt("settings.history-limit", 20);
+
+        int displayed = Math.min(history.size(), maximum);
+
+        for (int i = 0; i < displayed; i++) {
+            player.sendMessage(color("&e" + (i + 1)
+                    + ". &f" + history.get(i)));
         }
 
-        player.sendMessage(color("&8&m------------------------------"));
+        player.sendMessage(color("&7Showing &e" + displayed
+                + " &7history entries."));
+
+        player.sendMessage(color("&8&m------------------------------------"));
 
         return true;
     }
