@@ -1,5 +1,7 @@
 package com.shadowx.tpa.commands;
 
+import com.shadowx.tpa.managers.RequestManager;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -14,9 +16,11 @@ import java.util.List;
 public class IgnoreCommand implements CommandExecutor {
 
     private final JavaPlugin plugin;
+    private final RequestManager requestManager;
 
-    public IgnoreCommand(JavaPlugin plugin) {
+    public IgnoreCommand(JavaPlugin plugin, RequestManager requestManager) {
         this.plugin = plugin;
+        this.requestManager = requestManager;
     }
 
     @Override
@@ -68,6 +72,11 @@ public class IgnoreCommand implements CommandExecutor {
             player.sendMessage(color("&aYou unignored &e"
                     + target.getName() + "&a!"));
 
+            requestManager.addHistory(
+                    player.getUniqueId(),
+                    "Unignored " + target.getName()
+            );
+
         } else {
 
             ignored.add(targetId);
@@ -75,8 +84,19 @@ public class IgnoreCommand implements CommandExecutor {
             plugin.getConfig().set(path, ignored);
             plugin.saveConfig();
 
+            // Remove pending request from ignored player
+            requestManager.removeRequest(
+                    target.getUniqueId(),
+                    player.getUniqueId()
+            );
+
             player.sendMessage(color("&aYou are now ignoring &e"
                     + target.getName() + "&a!"));
+
+            requestManager.addHistory(
+                    player.getUniqueId(),
+                    "Ignored " + target.getName()
+            );
         }
 
         return true;
