@@ -1,6 +1,7 @@
 package com.shadowx.tpa.commands;
 
-import org.bukkit.ChatColor;
+import com.shadowx.tpa.managers.RequestManager;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -10,42 +11,60 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class ToggleCommand implements CommandExecutor {
 
     private final JavaPlugin plugin;
+    private final RequestManager requestManager;
 
-    public ToggleCommand(JavaPlugin plugin) {
+    public ToggleCommand(JavaPlugin plugin, RequestManager requestManager) {
         this.plugin = plugin;
+        this.requestManager = requestManager;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command,
-                             String label, String[] args) {
+    public boolean onCommand(
+            CommandSender sender,
+            Command command,
+            String label,
+            String[] args
+    ) {
 
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can use this command!");
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("§cThis command can only be used by players.");
             return true;
         }
 
+        Player player = (Player) sender;
+
         if (!player.hasPermission("shadowxtpa.toggle")) {
-            player.sendMessage(color("&cYou don't have permission!"));
+            player.sendMessage("§cYou don't have permission to use this command.");
             return true;
         }
 
         String path = "disabled-requests." + player.getUniqueId();
 
-        boolean disabled = plugin.getConfig().getBoolean(path, false);
+        boolean defaultEnabled = plugin.getConfig()
+                .getBoolean("settings.request-toggle-default", true);
 
-        plugin.getConfig().set(path, !disabled);
+        boolean currentlyDisabled = plugin.getConfig()
+                .getBoolean(path, !defaultEnabled);
+
+        boolean newDisabled = !currentlyDisabled;
+
+        plugin.getConfig().set(path, newDisabled);
         plugin.saveConfig();
 
-        if (!disabled) {
-            player.sendMessage(color("&cIncoming TPA requests are now OFF!"));
+        if (newDisabled) {
+            player.sendMessage("§cYou will no longer receive TPA requests.");
+            requestManager.addHistory(
+                    player.getUniqueId(),
+                    "Disabled incoming TPA requests"
+            );
         } else {
-            player.sendMessage(color("&aIncoming TPA requests are now ON!"));
+            player.sendMessage("§aYou can now receive TPA requests.");
+            requestManager.addHistory(
+                    player.getUniqueId(),
+                    "Enabled incoming TPA requests"
+            );
         }
 
         return true;
-    }
-
-    private String color(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
     }
 }
