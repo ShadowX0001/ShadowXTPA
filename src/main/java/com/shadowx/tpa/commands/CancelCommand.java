@@ -27,42 +27,75 @@ public class CancelCommand implements CommandExecutor {
             return true;
         }
 
-        if (!player.hasPermission("shadowxtpa.use")) {
+        if (!player.hasPermission("shadowxtpa.tpa")) {
             player.sendMessage(color("&cYou don't have permission!"));
             return true;
         }
 
-        int cancelled = 0;
+        Player target = null;
 
-        for (Player target : Bukkit.getOnlinePlayers()) {
+        if (args.length == 1) {
+            target = Bukkit.getPlayerExact(args[0]);
 
-            TPARequest request = requestManager.getRequest(
-                    player.getUniqueId(),
-                    target.getUniqueId()
-            );
-
-            if (request == null) {
-                continue;
+            if (target == null) {
+                player.sendMessage(color("&cPlayer not found or offline!"));
+                return true;
             }
-
-            requestManager.removeRequest(
-                    player.getUniqueId(),
-                    target.getUniqueId()
-            );
-
-            target.sendMessage(color("&c" + player.getName()
-                    + " cancelled their TPA request!"));
-
-            cancelled++;
-        }
-
-        if (cancelled == 0) {
-            player.sendMessage(color("&cYou don't have any pending requests!"));
+        } else if (args.length > 1) {
+            player.sendMessage(color("&cUsage: /tpacancel [player]"));
             return true;
         }
 
-        player.sendMessage(color("&aSuccessfully cancelled &e"
-                + cancelled + "&a pending request(s)!"));
+        TPARequest selectedRequest = null;
+
+        if (target != null) {
+            selectedRequest = requestManager.getRequest(
+                    player.getUniqueId(),
+                    target.getUniqueId()
+            );
+        } else {
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                TPARequest request = requestManager.getRequest(
+                        player.getUniqueId(),
+                        onlinePlayer.getUniqueId()
+                );
+
+                if (request != null) {
+                    selectedRequest = request;
+                    target = onlinePlayer;
+                    break;
+                }
+            }
+        }
+
+        if (selectedRequest == null) {
+            player.sendMessage(color("&cYou have no pending request to cancel!"));
+            return true;
+        }
+
+        if (!requestManager.removeRequest(
+                player.getUniqueId(),
+                target.getUniqueId())) {
+
+            player.sendMessage(color("&cCould not cancel your request!"));
+            return true;
+        }
+
+        player.sendMessage(color("&aYour TPA request to &e"
+                + target.getName() + " &ahas been cancelled!"));
+
+        target.sendMessage(color("&e" + player.getName()
+                + " &chas cancelled their TPA request!"));
+
+        requestManager.addHistory(
+                player.getUniqueId(),
+                "Cancelled request to " + target.getName()
+        );
+
+        requestManager.addHistory(
+                target.getUniqueId(),
+                player.getName() + " cancelled their request"
+        );
 
         return true;
     }
