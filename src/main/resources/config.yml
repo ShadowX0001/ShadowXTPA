@@ -1,0 +1,43 @@
+# =====================================
+#          ShadowXTPA CONFIG
+# =====================================
+
+settings:
+
+  # Request automatically expire hone ka time
+  request-timeout: 60
+
+  # Teleport countdown (seconds)
+  teleport-delay: 5
+
+  # Request bhejne ka cooldown
+  cooldown: 30
+
+  # Maximum pending requests
+  max-pending-requests: 5
+
+  # Teleport cancellation settings
+  cancel-on-move: true
+  cancel-on-damage: true
+  cancel-on-death: true
+  cancel-on-world-change: true
+
+  # Cross-world teleport
+  allow-cross-world: true
+
+  # Duplicate request protection
+  prevent-duplicate-requests: true
+
+  # TPA requests default ON
+  request-toggle-default: true
+
+  # Ignore system
+  ignore-system: true
+
+  # Debug mode
+  debug: false
+
+  # Command aliases
+  aliases:
+    tp: true
+    call: true
