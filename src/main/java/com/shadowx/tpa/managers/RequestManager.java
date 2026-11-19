@@ -153,16 +153,15 @@ public class RequestManager {
     }
 
     public void addHistory(UUID player, String message) {
+        ShadowXTPA app = (ShadowXTPA) plugin;
         String path = "history." + player;
-        List<String> history = new ArrayList<>(plugin.getConfig().getStringList(path));
+        List<String> entries = new ArrayList<>(app.getHistory().getStringList(path));
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
-        history.add(timestamp + " - " + message);
-
+        entries.add(timestamp + " - " + message);
         int maximum = Math.max(1, plugin.getConfig().getInt("settings.history-limit", 20));
-        while (history.size() > maximum) history.remove(0);
-
-        plugin.getConfig().set(path, history);
-        plugin.saveConfig();
+        while (entries.size() > maximum) entries.remove(0);
+        app.getHistory().set(path, entries);
+        app.saveHistory();
     }
 
     public void removePlayerRequests(UUID playerId) {
