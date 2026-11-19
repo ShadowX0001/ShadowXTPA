@@ -1,6 +1,7 @@
 package com.shadowx.tpa.commands;
 
 import org.bukkit.ChatColor;
+import com.shadowx.tpa.ShadowXTPA;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -39,7 +40,7 @@ public class HistoryCommand implements CommandExecutor {
         String path = "history." + player.getUniqueId();
 
         List<String> history =
-                plugin.getConfig().getStringList(path);
+                ((ShadowXTPA) plugin).getHistory().getStringList(path);
 
         player.sendMessage(color("&8&m----------&r &6TPA HISTORY &8&m----------"));
 
