@@ -1,5 +1,7 @@
 package com.shadowx.tpa.managers;
 
+import com.shadowx.tpa.ShadowXTPA;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
