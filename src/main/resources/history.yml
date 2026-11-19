@@ -1,0 +1,2 @@
+# Request history is stored separately from config.yml.
+history: {}
